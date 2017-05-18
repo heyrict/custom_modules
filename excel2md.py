@@ -28,11 +28,22 @@ def main():
     opt.add_option('-s','--squeeze',dest='squeeze',default=False,action='store_true',help='squeeze the form')
     opt.add_option('-n','--replace-na',dest='replace_na',default=False,action='store_true')
     opt.add_option('-a','--align',dest='align',default='c',help='align: [l,c,r]')
+    opt.add_option('--uwidth',dest='uwidth',default=2,help='relative width of utf8 characters with latin characters')
+    opt.add_option('--spcwidth',dest='spcwidth',default=1,help='relative width of space with latin characters')
+    opt.add_option('--preset',dest='preset',default=None,help='presettings: [`xmind`]')
     (options,args) = opt.parse_args()
 
     inp = args
     data = None
     mode = 'a'
+
+    options.uwidth = float(options.uwidth)
+    options.spcwidth = float(options.spcwidth)
+
+    if options.preset:
+        if options.preset == 'xmind':
+            options.uwidth = 2.5
+            options.spcwidth = 0.605
 
     if options.in_place: 
         mode = 'w' 
@@ -86,10 +97,10 @@ def main():
     if TO==None:
         if options.to_clipboard == True:
             outstr = string()
-            df_format_print(data,outstr,squeeze=options.squeeze,align=options.align)
+            df_format_print(data,outstr,squeeze=options.squeeze,align=options.align,uwidth=options.uwidth,spcwidth=options.spcwidth)
             pyperclip.copy(outstr.read())
         else:
-            df_format_print(data,squeeze=options.squeeze,align=options.align)
+            df_format_print(data,squeeze=options.squeeze,align=options.align,uwidth=options.uwidth,spcwidth=options.spcwidth)
     else:
         if TO in ['xls','xlsx','excel']:
             data.to_excel(options.output,index=False)
@@ -98,7 +109,7 @@ def main():
             else: data.to_csv(sys.stdout,index=False)
         else:
             with open(options.output,mode) as fo:
-                df_format_print(data,file=fo,squeeze=options.squeeze,align=options.align)
+                df_format_print(data,file=fo,squeeze=options.squeeze,align=options.align,uwidth=options.uwidth,spcwidth=options.spcwidth)
     return 0
 
 
