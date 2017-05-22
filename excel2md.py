@@ -91,6 +91,8 @@ def main():
                 try: data = df_format_read(f.read(),replace_na=options.replace_na)
                 except Exception as e: print(e);return
 
+    data = data.applymap(str)
+
     # output
     TO = options.TO if options.TO else (options.output.split('.')[-1]\
                                         if options.output else None)
