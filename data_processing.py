@@ -299,6 +299,7 @@ def df_filter(df, column, condition, how='find', include=True):
         True if you want to include all found data in df
         False if you want to exclude all found data in df
     '''
+    if not condition: return df
     if type(column)==str:
         condition = [condition] if type(condition) in (str,int,float) else list(condition)
         df.dropna(subset=[column],inplace=True)
@@ -315,7 +316,7 @@ def df_filter(df, column, condition, how='find', include=True):
             dfs = df.copy()
             for c in column:
                 dfs = df_filter(dfs,c,condition,how,include)
-            return dfs
+            return dfs.drop_duplicates()
 
 class InteractiveAnswer():
     def __init__(self,hint='',varify=None,serializer=lambda x:x,encode=None,yes_or_no=False):
