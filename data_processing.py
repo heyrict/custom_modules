@@ -311,12 +311,19 @@ def df_filter(df, column, condition, how='find', include=True):
     else:
         if include:
             dfs = pd.concat([df_filter(df,c,condition,how,include) for c in column],ignore_index=True)
-            return dfs
+            return dfs.drop_duplicates()
         else:
             dfs = df.copy()
             for c in column:
                 dfs = df_filter(dfs,c,condition,how,include)
             return dfs.drop_duplicates()
+
+def be_subset(sub,main):
+    res = True
+    for i in sub:
+        res &= (i in main)
+    return res
+        
 
 class InteractiveAnswer():
     def __init__(self,hint='',varify=None,serializer=lambda x:x,encode=None,yes_or_no=False):
@@ -329,17 +336,17 @@ class InteractiveAnswer():
             self._serializer = serializer
             self._encode = encode
         self._hint = hint
-        if self._varify: self._hint += '('+'/'.join([self._serializer(i) for i in list(self._varify)])+')'
+        if self._varify: self._hint += '('+'/'.join([i for i in list(self._varify)])+')'
 
     def process(self,get):
         if not get: return
         else: 
             get = self._serializer(get)
-            # TODO: maybe changed with element-wise find function
             if self._varify:
-                if get not in self._varify: return
-            if self._encode: get = self._encode[get]
-            return get
+                get = [get] if type(get) == str else get
+                if not be_subset(get,self._varify): return
+            if self._encode: get = [self._encode[i] for i in get]
+            return get[0] if len(get) == 1 else get
 
     def get(self):
         while 1:
