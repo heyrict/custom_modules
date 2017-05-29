@@ -1,42 +1,6 @@
 import sys, re
 import pandas as pd, numpy as np
-from data_processing import split_wrd
-
-def _space_fill(string,length,align='c',uwidth=2,spcwidth=1):
-    '''
-    fill spaces to a certain length.
-
-    Parameters
-    ----------
-    string : str
-    length : int
-    align : char
-        - `c` : centered
-        - 'l' : left-aligned
-        - 'r' : right-aligned
-    uwidth : int
-        relative width of utf8 characters with latin characters
-    '''
-    string = str(string)
-    delta = uwidth - 1
-    ulen = (len(string.encode('utf-8')) - len(string))//2
-    strlen = int(len(string) + delta * ulen)
-
-    if length < strlen: length = strlen
-    if align[0] == 'c':
-        leftspc = (length-strlen)//2
-        rightspc = length-strlen-leftspc
-    elif align[0] == 'l':
-        leftspc = 0
-        rightspc = length-strlen
-    elif align[0] == 'r':
-        rightspc = 0
-        leftspc = length-strlen
-    else:
-        raise ValueError('align not in [`c`,`l`,`r`]')
-    leftspc = int(leftspc/spcwidth)
-    rightspc = int(rightspc/spcwidth)
-    return ' '*leftspc+string+' '*rightspc
+from data_processing import split_wrd, space_fill
 
     
 def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidth=2,spcwidth=1):
@@ -59,10 +23,10 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
         dfshap.iloc[:,c] = dfshap.iloc[:,c].map(lambda x: int(len(str(x)) + delta*(len(x.encode('utf-8')) - len(x))//2))
     lengths = np.max([lengths,dfshap.max()],axis=0)+2
     print(' '.join(['-'*i for i in lengths]),file=file)
-    dcfl = [_space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
+    dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
     print(' '.join(dcfl),file=file)
     print(' '.join(['-'*i for i in lengths]),file=file)
-    ddfl = [df.ix[:,c].map(lambda x: _space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
+    ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
 
     if squeeze: ddfl = '\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
     else: ddfl = '\n\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])

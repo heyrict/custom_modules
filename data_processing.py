@@ -1,5 +1,4 @@
 # coding: utf-8
-import pandas as pd, numpy as np
 import sys, re
 
 def flip_dict(dict_to_flip):
@@ -136,126 +135,6 @@ def transfer_datatype(data):
         except: return data
 
 
-def stacked_series_flatten(ser):
-    '''
-    flatten a series containing 1-D list-like items
-
-    Parameters
-    ----------
-    ser : Series
-
-    Returns
-    -------
-    sser : Series
-        series item with all items flatten
-
-    Example
-    -------
-    >>> import pandas as pd
-    >>> ser = pd.Series([[1,2,3],[4,5,6],[7,8,9]], name='array')
-    0    [1, 2, 3]
-    1    [4, 5, 6]
-    2    [7, 8, 9]
-    Name: array, dtype: object
-
-    >>> stacked_series_flatten(ser, name='array'))
-    0    1
-    1    4
-    2    7
-    3    2
-    4    5
-    5    8
-    6    3
-    7    6
-    8    9
-    Name: array, dtype: int64
-    '''
-    ser = ser.map(transfer_datatype)
-    sser = ser[ser.map(type) != list]
-    lser = ser[ser.map(type) == list]
-    maxn = lser.map(len).max()
-    if np.isnan(maxn): return sser
-    for i in range(int(maxn)):
-        sser = sser.append(lser.map(lambda x: x[i] if len(x)>i else None),ignore_index=True)
-    return sser.dropna()
-
-    
-def stacked_series_map(ser,mapfunc='count',label=None,ascending=False):
-    '''
-    map every item in a 1-D stacked series
-    
-    Parameters
-    ----------
-    ser : Series or DataFrame
-    mapfunc : str or function, default 'count'
-        - 'count' : count every element in series
-        - 'sum' : sum index of every element in series
-        - function
-    label : str, default None
-        ignored if type of ser is Series.
-        Do stacked_series_map on DataFrame's label column
-    ascending : bool, default False
-
-    See Also
-    --------
-    stacked_series_flatten
-
-    Examples
-    --------
-    >>> t = pd.Series([1,[4,5,6],[6,5],[3,6],[]],name='array')
-    >>> t
-    0            1
-    1    [4, 5, 6]
-    2       [6, 5]
-    3       [3, 6]
-    4           []
-    Name: array, dtype: object
-    >>> stacked_series_map(t)
-           count
-    array       
-    6.0        3
-    5.0        2
-    1.0        1
-    3.0        1
-    4.0        1
-    >>> stacked_series_map(t,'sum')
-           sum
-    array     
-    6.0     18
-    5.0     11
-    3.0      3
-    4.0      1
-    1.0      0
-
-    mapfunc can also be a function applying to a Groupby object.
-    >>> stacked_series_map(t,lambda x: x.max())
-           result
-    array        
-    6.0       9.0
-    5.0       6.0
-    3.0       3.0
-    4.0       1.0
-    1.0       0.0
-    '''
-    ser.name = ser.name if ser.name else 'ser'
-    df = stacked_series_flatten(ser).reset_index().rename_axis({'index':'result'}, axis=1)
-    if type(mapfunc) == str:
-        if mapfunc not in ['count','sum']: raise ValueError('mapfunc param not supported, please input count or sum')
-        elif mapfunc == 'sum':
-            dfp = df.groupby(ser.name).sum().rename_axis({'result':'sum'},axis=1).sort_values('sum',ascending=ascending)
-        elif mapfunc == 'count':
-            dfp = df.groupby(ser.name).count().rename_axis({'result':'count'},axis=1).sort_values('count',ascending=ascending)
-    else:
-        dfp = df.groupby(ser.name).apply(mapfunc).sort_values('result',ascending=ascending)
-        del dfp[ser.name]
-    if type(label) == type(None): return dfp
-    else:
-        if type(label) in [dict,pd.Series]: return dfp.rename_axis(label)
-        elif type(label) == pd.DataFrame:
-            if label.shape[1]!=2:
-                raise ValueError('Length of DataFrame columns must be 2; %i detected'%label.shape[1])
-            return dfp.rename_axis(dict(label.values))
-
 def _in_list(x,ls,how='find'):
     '''
     check if x match rules in ls
@@ -281,44 +160,10 @@ def _in_list(x,ls,how='find'):
     return False
    
  
-def df_filter(df, column, condition, how='find', include=True):
-    '''
-    find all records satisfying given condition
-
-    Parameters
-    ----------
-    df : DataFrame
-    column : str
-    condition : iterable or scalar
-        list of filter rules
-    how : str 
-        - 'find' : call x.find(rule)
-        - 're' : call re.find(rule,x)
-        - 'fullmatch' : x == rule
-    include : bool
-        True if you want to include all found data in df
-        False if you want to exclude all found data in df
-    '''
-    if not condition: return df
-    if type(column)==str:
-        condition = [condition] if type(condition) in (str,int,float) else list(condition)
-        df.dropna(subset=[column],inplace=True)
-        if include:
-            df = df[df[column].map(lambda x: _in_list(x,condition,how=how))]
-        else:
-            df = df[df[column].map(lambda x: not _in_list(x,condition,how=how))]
-        return df
-    else:
-        if include:
-            dfs = pd.concat([df_filter(df,c,condition,how,include) for c in column],ignore_index=True)
-            return dfs.drop_duplicates()
-        else:
-            dfs = df.copy()
-            for c in column:
-                dfs = df_filter(dfs,c,condition,how,include)
-            return dfs.drop_duplicates()
-
 def be_subset(sub,main):
+    '''
+    return True if sub is a subset of main.
+    '''
     res = True
     for i in sub:
         res &= (i in main)
@@ -326,25 +171,63 @@ def be_subset(sub,main):
         
 
 class InteractiveAnswer():
-    def __init__(self,hint='',varify=None,serializer=lambda x:x,encode=None,yes_or_no=False):
+    '''
+    an enhanced version for input.
+
+    Parameters
+    ----------
+    hint : str
+        hint string that will be printed before reading an input.
+    verify : list-like
+        a list that confines the user's input.
+    serializer : function
+        serialize function that will preprocess user's input.
+    encode : dict
+        (experimental) replace exact input in keys by values.
+        suggest using it only if `verify` is set.
+    yes_or_no : bool
+        a preset value that will get yes or no questions.
+
+    Examples
+    --------
+    >>> InteractiveAnswer('Continue?',yes_or_no=True).get()
+    Continue?(y/n)
+    Continue?(y/n)y
+    True
+
+    >>> InteractiveAnswer("What's your name?",serializer=lambda x:x.title()).get()
+    What's your name?eric xie
+    'Eric Xie'
+
+    >>> InteractiveAnswer("Which level to choose?",verify='12345',serializer=lambda x:x.split()).get()
+    Which level to choose?(1-5)1 2
+    ['1', '2']
+
+    >>> InteractiveAnswer('How old are you?',verify=range(1,126),serializer=int).get()
+    How old are you?(1-125)120
+    120
+    '''
+    def __init__(self,hint='',verify=None,serializer=lambda x:x,encode=None,yes_or_no=False):
         if yes_or_no:
-            self._varify = 'yn'
+            self._verify = 'yn'
             self._serializer = lambda x: x.lower()[0]
             self._encode = {'y':True,'n':False}
         else:
-            self._varify = varify
+            self._verify = verify
             self._serializer = serializer
             self._encode = encode
         self._hint = hint
-        if self._varify: self._hint += '('+'/'.join([i for i in list(self._varify)])+')'
+        if self._verify: 
+            try: self._hint += '(' + squeeze_numlist(self._verify) + ')'
+            except: self._hint += '('+'/'.join([i for i in list(self._verify)])+')'
 
     def process(self,get):
         if not get: return
         else: 
             get = self._serializer(get)
-            if self._varify:
-                get = [get] if type(get) == str else get
-                if not be_subset(get,self._varify): return
+            if self._verify:
+                get = [get] if type(get) != list else get
+                if not be_subset(get,self._verify): return
             if self._encode: get = [self._encode[i] for i in get]
             return get[0] if len(get) == 1 else get
 
@@ -353,3 +236,96 @@ class InteractiveAnswer():
             get = self.process(input(self._hint).strip())
             if get != None: return get
 
+
+def space_fill(string,length,align='c',uwidth=2,spcwidth=1):
+    '''
+    fill spaces to a certain length.
+
+    Parameters
+    ----------
+    string : str
+    length : int
+    align : char
+        - `c` : centered
+        - 'l' : left-aligned
+        - 'r' : right-aligned
+    uwidth : int
+        relative width of utf8 characters with latin characters
+    '''
+    string = str(string)
+    delta = uwidth - 1
+    ulen = (len(string.encode('utf-8')) - len(string))//2
+    strlen = int(len(string) + delta * ulen)
+
+    if length < strlen: length = strlen
+    if align[0] == 'c':
+        leftspc = (length-strlen)//2
+        rightspc = length-strlen-leftspc
+    elif align[0] == 'l':
+        leftspc = 0
+        rightspc = length-strlen
+    elif align[0] == 'r':
+        rightspc = 0
+        leftspc = length-strlen
+    else:
+        raise ValueError('align not in [`c`,`l`,`r`]')
+    leftspc = int(leftspc/spcwidth)
+    rightspc = int(rightspc/spcwidth)
+    return ' '*leftspc+string+' '*rightspc
+
+
+def cstrcmp(str1, str2):
+    '''
+    compare two strings (or iterables).
+    returns the index where str1 is different from str2
+
+    Examples
+    --------
+    >>> cstrcmp('compare','compulsory')
+    -4
+    >>> cstrcmp('compulsory','compare')
+    4
+    >>> cstrcmp('compute','computer')
+    -7
+
+    >>> cstrcmp([1,2,3,4,5],[1,2,4,5,6])
+    -2
+    '''
+    i = 0
+    while i < min(len(str1),len(str2)):
+        try: diff = str1[i] - str2[i] # numeric data support
+        except: diff = ord(str(str1[i])) - ord(str(str2[i]))
+        if diff: return diff // abs(diff) * i
+        i += 1
+    return (len(str1) - len(str2)) * min(len(str1),len(str2))
+
+
+def squeeze_numlist(numlist,sort=False):
+    '''
+    squeeze a numlist.
+    '''
+    if sort: numlist = sorted([int(i) for i in numlist])
+    length = len(numlist)
+    out = []
+    while length > 1:
+        comp = range(int(numlist[0]),int(numlist[0])+length)
+        ind = abs(cstrcmp(numlist,comp))
+        if ind == 1: out.append(comp[0])
+        else: out.append('%d-%d'%(comp[0],comp[ind-1]))
+        
+        if ind == 0: break
+        numlist = numlist[ind:]
+        length = len(numlist)
+    return ','.join(out)
+
+
+def unsqueeze_numlist(numlist):
+    '''
+    unsqueeze a numlist squeezed by function squeeze_numlist().
+    '''
+    numlist = [i.split('-') for i in split_wrd(numlist,',')]
+    out = []
+    for i in numlist:
+        if len(i)==1: out.append([int(i[0])])
+        else: out.append(list(range(int(i[0]),int(i[1])+1)))
+    return sum(out,[])
