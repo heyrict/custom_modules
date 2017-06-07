@@ -6,13 +6,13 @@ from data_processing import split_wrd
 def calc(throw_dice):
     throw_dice = throw_dice.upper()
     comp = None
-    if throw_dice.find('>=') >= 0: comp = 'ge'
-    elif throw_dice.find('<=') >= 0: comp = 'le'
-    elif throw_dice.find('<') >= 0: comp = 'lt'
-    elif throw_dice.find('>') >= 0: comp = 'gt'
+    if throw_dice.find('>=') >= 0 or throw_dice.find('GE') >= 0: comp = 'ge'
+    elif throw_dice.find('<=') >= 0 or throw_dice.find('LE') >= 0: comp = 'le'
+    elif throw_dice.find('<') >= 0 or throw_dice.find('LT') >= 0 or throw_dice.find('L') >= 0: comp = 'lt'
+    elif throw_dice.find('>') >= 0 or throw_dice.find('GT') >= 0 or throw_dice.find('G') >= 0: comp = 'gt'
 
     if comp:
-        temp = split_wrd(throw_dice,['>=','<=','>','<'])
+        temp = split_wrd(throw_dice,['>=','<=','>','<','GE','LE','LT','GT','G','L'])
         thresh = float(temp[1])
         throw_dice = temp[0]
 
@@ -23,7 +23,7 @@ def calc(throw_dice):
 
     nums = int(nums); faces = int(faces)
     result = [random.randint(1,faces) for i in range(nums)]
-    yield 'Result: '+' '.join([str(i) for i in result])
+    yield '\tResult: '+' '.join([str(i) for i in result])
 
     if comp:
         if comp == 'ge': compared_result = [i >= thresh for i in result]
@@ -33,8 +33,9 @@ def calc(throw_dice):
         compared_result = sum(compared_result)
 
         if len(result) == 1:
-            compared_result = 'Success!' if compared_result else 'Failed'
-        yield '\tSuccess: '+str(compared_result)
+            compared_result = '\033[1;32mSuccess!\033[0m' if compared_result else '\033[1;31mFailed\033[0m'
+            yield('\t'+compared_result)
+        else: yield '\tSuccess: '+str(compared_result)
 
     return
 
@@ -46,16 +47,16 @@ def main():
     if len(args) == 0:
         # interactive input
         try:
-            i = str(sys.stdin.readline())
+            i = str(sys.stdin.readline()).strip()
             while i:
-                print(i,end='\t')
-                print('\n'.join(calc(i)))
-                i = str(sys.stdin.readline())
-        except KeyboardInterrupt: pass
+                try: print('\n'.join(calc(i)))
+                except Exception as e: print(e)
+                i = str(sys.stdin.readline()).strip()
+        except KeyboardInterrupt as e: pass
 
     else:
         for i in args: 
-            print(i,end='\t')
+            print(i+'\n',end='')
             print('\n'.join(calc(i)))
 
     return
