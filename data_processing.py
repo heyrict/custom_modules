@@ -139,25 +139,32 @@ def _in_list(x,ls,how='find'):
     '''
     check if x match rules in ls
     parameters:
-        x : str-like variable
+        x : str-like or numeric variable
         ls : iterable containing rules
         how : str
+            functions only if type of x is str
             - 'find' : call x.find(rule)
             - 're' : call re.find(rule,x)
             - 'fullmatch' : x == rule
     '''
-    x = str(x)
-    if how == 'find':
+    if type(x) == str:
+        if how == 'find':
+            for item in ls:
+                if x.find(item) >= 0: return True
+        elif how == 're':
+            for item in ls:
+                if re.findall(item,x): return True
+        elif how == 'fullmatch':
+            for item in ls:
+                item = str(item).strip()
+                if item == x: return True
+        return False
+    else:
+        x = int(x)
+        ls = [int(i) for i in ls]
         for item in ls:
-            if x.find(item) >= 0: return True
-    elif how == 're':
-        for item in ls:
-            if re.findall(item,x): return True
-    elif how == 'fullmatch':
-        for item in ls:
-            item = str(item).strip()
-            if item == x: return True
-    return False
+            if x == item: return True
+        return False
    
  
 def be_subset(sub,main):
@@ -207,29 +214,35 @@ class InteractiveAnswer():
     How old are you?(1-125)120
     120
     '''
-    def __init__(self,hint='',verify=None,serializer=lambda x:x,encode=None,yes_or_no=False):
+    def __init__(self,hint='',verify=None,serializer=lambda x:x,encode=None,yes_or_no=False,accept_empty=False):
         if yes_or_no:
             self._verify = 'yn'
             self._serializer = lambda x: x.lower()[0]
             self._encode = {'y':True,'n':False}
+            self._accept_empty = False
         else:
             self._verify = verify
             self._serializer = serializer
             self._encode = encode
+            self._accept_empty = accept_empty
         self._hint = hint
         if self._verify: 
             try: self._hint += '(' + squeeze_numlist(self._verify) + ')'
             except: self._hint += '('+'/'.join([i for i in list(self._verify)])+')'
 
     def process(self,get):
-        if not get: return
-        else: 
+        if not self._accept_empty:
+            if not get: return
+
+        try:
             get = self._serializer(get)
+            get_is_list = type(get) == list
             if self._verify:
-                get = [get] if type(get) != list else get
+                get = get if get_is_list else [get]
                 if not be_subset(get,self._verify): return
             if self._encode: get = [self._encode[i] for i in get]
-            return get[0] if len(get) == 1 else get
+            return get[0] if not get_is_list and len(get) == 1 else get
+        except: return
 
     def get(self):
         while 1:
