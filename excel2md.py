@@ -63,12 +63,12 @@ def main():
             instr.write(pyperclip.paste())
         elif options.vim_edit:
             try:
-                os.system('touch .excel2md_vim_edit')
-                os.system('vim .excel2md_vim_edit')
+                os.system('touch /tmp/excel2md_edit.md')
+                os.system('vim /tmp/excel2md_edit.md')
             except: print('Error: No vim editor available'); return;
-            with open('.excel2md_vim_edit','r') as f:
+            with open('/tmp/excel2md_edit.md','r') as f:
                 instr.write(f.read())
-            os.remove('.excel2md_vim_edit')
+            #os.remove('/tmp/excel2md_edit.md')
         else:
             r = str(sys.stdin.readline())
             while r:
