@@ -342,3 +342,17 @@ def unsqueeze_numlist(numlist):
         if len(i)==1: out.append([int(i[0])])
         else: out.append(list(range(int(i[0]),int(i[1])+1)))
     return sum(out,[])
+
+def colorit(string,color):
+    colors = ['black','red','green','yellow','blue','magenta',\
+            'cyan','white','gray','lightred','lightgreen','lightyellow',\
+            'lightblue','lightmagenta','lightcyan']
+    if type(color) == str:
+        if color not in colors:
+            raise ValueError('Given color',color,'not supported')
+        color = colors.index(color)
+    else:
+        if color not in range(256):
+            raise ValueError(color,'is not a 256-color index')
+    
+    return '\033[38;5;%dm%s\033[0m'%(color,string)
