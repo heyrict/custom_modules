@@ -99,3 +99,20 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# vim swap files
+.*.swp
+
+# other projects
+CLV3/
+SysAna/
+coursera/
+events/
+exam/
+rm-protection/
+scraping_eng_wordlist/
+scrapy/
+secr_train/
+
+# binary files for PATH
+bin/
