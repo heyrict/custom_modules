@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import random, optparse, sys
-from data_processing import split_wrd
+from data_processing import split_wrd, colorit
 
 def calc(throw_dice):
     throw_dice = throw_dice.upper()
@@ -33,7 +33,7 @@ def calc(throw_dice):
         compared_result = sum(compared_result)
 
         if len(result) == 1:
-            compared_result = '\033[1;32mSuccess!\033[0m' if compared_result else '\033[1;31mFailed\033[0m'
+            compared_result = colorit('Success','green') if compared_result else colorit('Failed','red')
             yield('\t'+compared_result)
         else: yield '\tSuccess: '+str(compared_result)
 
@@ -50,14 +50,16 @@ def main():
             i = str(sys.stdin.readline()).strip()
             while i:
                 try: print('\n'.join(calc(i)))
-                except Exception as e: print(e)
+                except: print(colorit('\tCannot recognize the input.','magenta'))
                 i = str(sys.stdin.readline()).strip()
-        except KeyboardInterrupt as e: pass
+        except KeyboardInterrupt as e: 
+            print('\b\b',end='')
 
     else:
         for i in args: 
             print(i+'\n',end='')
-            print('\n'.join(calc(i)))
+            try: print('\n'.join(calc(i)))
+            except: print(colorit('\tCannot recognize the input.','magenta'))
 
     return
 
