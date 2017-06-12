@@ -343,6 +343,7 @@ def unsqueeze_numlist(numlist):
         else: out.append(list(range(int(i[0]),int(i[1])+1)))
     return sum(out,[])
 
+
 def colorit(string,color):
     colors = ['black','red','green','yellow','blue','magenta',\
             'cyan','white','gray','lightred','lightgreen','lightyellow',\
@@ -356,3 +357,29 @@ def colorit(string,color):
             raise ValueError(color,'is not a 256-color index')
     
     return '\033[38;5;%dm%s\033[0m'%(color,string)
+
+
+def auto_newline(string, thresh=60, combine=False, remove_spaces=False, auto_indent=True):
+    if combine: 
+        string = re.sub(r' *([^\n]) *\n *([^\n]) *',r'\1 \2',string)
+    strls = split_at(string,'\n')
+    if remove_spaces: strls = [i.strip(' ') for i in strls]
+    if auto_indent: 
+        indents = [re.findall(' +\(?\d*\.?\)? *',i) for i in strls]
+        indents = [len(i[0]) if len(i)>0 else 0 for i in indents]
+    else: indents = [0]*len(strls)
+    for l in range(len(strls)):
+        line = strls[l]
+        length = len(line)
+        if length < thresh: continue
+        preferred_sep = sorted(set(i.end()-1 for i in re.finditer(r' +[^\n]',line)))
+
+        th = thresh
+        prev = th
+        for s in preferred_sep:
+            if s > th:
+                strls[l] = strls[l][:prev-length]+'\n'+indents[l]*' '+strls[l][prev-length:]
+                th += thresh
+                prev = th
+            else: prev = s
+    return ''.join(strls)
