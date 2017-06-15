@@ -373,7 +373,7 @@ def colorit(string,color):
     return '\033[38;5;%dm%s\033[0m'%(color,string)
 
 
-def auto_newline(string, thresh=60, combine=True, remove_spaces=False, auto_indent=True):
+def auto_newline(string, thresh=78, combine=True, remove_spaces=False, auto_indent=True):
     '''
     autometically change the linebreaks.
 
