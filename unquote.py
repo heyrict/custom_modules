@@ -18,10 +18,16 @@ def main():
         data = [i for i in os.listdir() if i.find('%')>=0]
         if len(data) == 0: return
     maxlen = max([len(i) for i in data])
+
+    outputname = []
+    for i in data:
+        topn = os.path.split(i)[1]
+        if not topn: topn = os.path.split(os.path.split(i)[0])[1] + '/'
+        outputname.append(options.outdir+unquote(topn))
     
     if options.no_test:
-        for i in data: os.system('mv "%s" "%s"'%(i,options.outdir+unquote(i)))
+        for i in range(len(data)): os.system('mv "%s" "%s"'%(data[i],outputname[i]))
     else:
-        for i in data: print(space_fill(i,maxlen,'l'),'->',unquote(i))
+        for i in range(len(data)): print(space_fill(data[i],maxlen,'l'),'->',outputname[i])
 
 main()
