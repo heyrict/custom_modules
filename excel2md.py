@@ -27,6 +27,7 @@ def main():
     opt.add_option('-r','--in-place',dest='in_place',default=False,action='store_true',help='replace the file')
     opt.add_option('-s','--squeeze',dest='squeeze',default=False,action='store_true',help='squeeze the form')
     opt.add_option('-n','--replace-na',dest='replace_na',default=False,action='store_true')
+    opt.add_option('-k','--kind',dest='kind',default='normal',help='select the output kind(`normal`/`simple`), default simple')
     opt.add_option('-a','--align',dest='align',default='c',help='align: [l,c,r]')
     opt.add_option('--uwidth',dest='uwidth',default=2,help='relative width of utf8 characters with latin characters')
     opt.add_option('--spcwidth',dest='spcwidth',default=1,help='relative width of space with latin characters')
@@ -40,6 +41,10 @@ def main():
     options.uwidth = float(options.uwidth)
     options.spcwidth = float(options.spcwidth)
 
+    outputkind = options.kind[0]
+    if outputkind not in 'sn': print('Error: outputkind %s not supported'%options.kind); return
+    outputkind = 'simple' if outputkind == 's' else 'normal'
+
     if options.preset:
         if options.preset == 'xmind':
             options.uwidth = 2.5
@@ -47,10 +52,11 @@ def main():
 
     if options.in_place: 
         mode = 'w' 
-        if len(inp)==0:
+        if options.vim_edit: options.output = '/tmp/excel2md_edit.md'
+        elif len(inp)==0:
             print('Error: no file found for replace');return
         elif len(inp)>1:
-            pirnt('Error: More than one arguments passed');return
+            print('Error: More than one arguments passed');return
         if not options.output:
             options.output = inp[0]
 
@@ -99,10 +105,14 @@ def main():
     if TO==None:
         if options.to_clipboard == True:
             outstr = string()
-            df_format_print(data,outstr,squeeze=options.squeeze,align=options.align,uwidth=options.uwidth,spcwidth=options.spcwidth)
+            df_format_print(data,outstr,squeeze=options.squeeze,\
+                    align=options.align,uwidth=options.uwidth,\
+                    spcwidth=options.spcwidth,kind=outputkind)
             pyperclip.copy(outstr.read())
         else:
-            df_format_print(data,squeeze=options.squeeze,align=options.align,uwidth=options.uwidth,spcwidth=options.spcwidth)
+            df_format_print(data,squeeze=options.squeeze,\
+                    align=options.align,uwidth=options.uwidth,\
+                    spcwidth=options.spcwidth,kind=outputkind)
     else:
         if TO in ['xls','xlsx','excel']:
             data.to_excel(options.output,index=False)
@@ -111,7 +121,9 @@ def main():
             else: data.to_csv(sys.stdout,index=False)
         else:
             with open(options.output,mode) as fo:
-                df_format_print(data,file=fo,squeeze=options.squeeze,align=options.align,uwidth=options.uwidth,spcwidth=options.spcwidth)
+                df_format_print(data,file=fo,squeeze=options.squeeze,\
+                        align=options.align,uwidth=options.uwidth,\
+                        spcwidth=options.spcwidth,kind=outputkind)
     return 0
 
 

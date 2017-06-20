@@ -3,7 +3,7 @@ import pandas as pd, numpy as np
 from data_processing import split_wrd, space_fill
 
     
-def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidth=2,spcwidth=1):
+def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidth=2,spcwidth=1,kind="simple"):
     lengths = []
     if index: df = df.reset_index()
     collen = len(df.columns)
@@ -22,17 +22,33 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
     for c in range(len(dfshap.columns)):
         dfshap.iloc[:,c] = dfshap.iloc[:,c].map(lambda x: int(len(str(x)) + delta*(len(x.encode('utf-8')) - len(x))//2))
     lengths = np.max([lengths,dfshap.max()],axis=0)+2
-    print(' '.join(['-'*i for i in lengths]),file=file)
-    dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
-    print(' '.join(dcfl),file=file)
-    print(' '.join(['-'*i for i in lengths]),file=file)
-    ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
 
-    if squeeze: ddfl = '\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
-    else: ddfl = '\n\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
+    if kind=="normal":
+        print('+'+'+'.join(['-'*i for i in lengths])+'+',file=file)
+        dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
+        print('|'+'|'.join(dcfl)+'|',file=file)
+        print('+'+'+'.join(['='*i for i in lengths])+'+',file=file)
+        ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
 
-    print(ddfl,file=file)
-    print('-'*(sum(lengths)+collen-1),file=file)
+        if squeeze: ddfl = '\n'.join(['|'+'|'.join(i)+'|' for i in pd.DataFrame(ddfl).T.values])
+        else: ddfl = ('\n+'+'+'.join(['-'*i for i in lengths])+'+\n')\
+                .join(['|'+'|'.join(i)+'|' for i in pd.DataFrame(ddfl).T.values])
+
+        print(ddfl,file=file)
+        print('+'+'+'.join(['-'*i for i in lengths])+'+',file=file)
+
+    elif kind=="simple":
+        print(' '.join(['-'*i for i in lengths]),file=file)
+        dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
+        print(' '.join(dcfl),file=file)
+        print(' '.join(['-'*i for i in lengths]),file=file)
+        ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
+
+        if squeeze: ddfl = '\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
+        else: ddfl = '\n\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
+
+        print(ddfl,file=file)
+        print('-'*(sum(lengths)+collen-1),file=file)
 
 
 def df_format_read(string,replace_na=True):
