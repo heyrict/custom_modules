@@ -67,12 +67,12 @@ def split_wrd(string,sep,rep=None,ignore_space=False,kind='split'):
         if type(rep)==str:
             for i in sep:
                 if kind == 'split': string = rep.join(string.split(i))
-                elif kind == 're': string = rep.join(re.split(i,string))
+                elif kind == 're': string = re.sub(i,rep,string)
             return string
         else:
             for i,j in zip(sep,rep):
                 if kind == 'split': string = j.join(string.split(i))
-                elif kind == 're': string = j.join(re.split(i,string))
+                elif kind == 're': string = re.sub(i,j,string)
             return string
 
 
