@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import optparse
+import optparse, re
 from data_processing import split_wrd, auto_newline
 
 HALFFULL=[('*','×'),(',','，'),('.','。'),('.','．'),\
          ('?','？'),('!','！'),('(','（'),(')','）'),\
          ('[','【'),(']','】'),(';','；'),('\'','‘'),\
-         ('\'','’'),('\"','“'),('\"','”'),]
+         (':','：'),('\'','’'),('\"','“'),('\"','”'),]
 
 def main():
     global HALFFULL
@@ -39,7 +39,7 @@ def main():
             exit(1)
 
     if options.only:
-        HALF = [i[0] + ' '*options.space for i in options.only]
+        HALF = [i[0] for i in options.only]
         FULL = [i[1] for i in options.only]
     else:
         for i in options.exclude:
@@ -47,7 +47,7 @@ def main():
             except: print('WARNING:',i,'is not in preset cases')
         HALFFULL += options.include
 
-        HALF = [i[0] + ' '*options.space for i in HALFFULL]
+        HALF = [i[0] for i in HALFFULL]
         FULL = [i[1] for i in HALFFULL]
 
     for i in args:
@@ -55,9 +55,13 @@ def main():
             data = f.read()
 
         if options.to_full:
-            data = split_wrd(data,HALF,FULL)
+            data = split_wrd(data,[' ?'+j if j=='(' else j+' ?'\
+                    for j in HALF],FULL,kind='re') \
+                    if options.space else split_wrd(data,HALF,FULL)
         else:
-            data = split_wrd(data,FULL,HALF)
+            data = split_wrd(data,[j+' ?' for j in FULL],\
+                    [' '+j if j=='(' else j+' ' for j in HALF],kind='re') \
+                    if options.space else split_wrd(data,FULL,HALF)
 
         with open(i,'w') as f:
             f.write(data)
