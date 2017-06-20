@@ -28,13 +28,27 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
         dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
         print('|'+'|'.join(dcfl)+'|',file=file)
         print('+'+'+'.join(['='*i for i in lengths])+'+',file=file)
-        ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
 
-        if squeeze: ddfl = '\n'.join(['|'+'|'.join(i)+'|' for i in pd.DataFrame(ddfl).T.values])
-        else: ddfl = ('\n+'+'+'.join(['-'*i for i in lengths])+'+\n')\
-                .join(['|'+'|'.join(i)+'|' for i in pd.DataFrame(ddfl).T.values])
+        ddsm = np.array([df.ix[:,c].map(lambda x: True if x in '|-' else False) for c in range(collen)])
 
-        print(ddfl,file=file)
+        ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth) if x not in '|-' else ' '*lengths[c]) for c in range(collen)]
+
+        if squeeze: ddflout = '\n'.join(['|'+'|'.join(i)+'|' for i in pd.DataFrame(ddfl).T.values])
+        #else: ddflout = ('\n+'+'+'.join(['-'*i for i in lengths])+'+\n')\
+                #.join(['|'+'|'.join(i)+'|' for i in pd.DataFrame(ddfl).T.values])
+        else:
+            dfproc = pd.DataFrame(ddfl).T.values
+            ddflout = ['|'+'|'.join(dfproc[0])+'|']
+            for ind in range(1,len(df)):
+                #ddflout.append('+'+'+'.join([(' ' if ddsm[j][ind] else '-')*i for i,j in zip(lengths,range(ddsm.shape[0]))])+'+')
+                line = '|' if ddsm[0][ind] else '+'
+                for i,j in zip(lengths,range(ddsm.shape[0])):
+                    line += (' ' if ddsm[j][ind] else '-')*i + ('|' if (ddsm[j][ind] and ddsm[j+1][ind]) else '+')
+                ddflout.append(line)
+                ddflout.append('|'+'|'.join(dfproc[ind])+'|')
+            ddflout = '\n'.join(ddflout)
+
+        print(ddflout,file=file)
         print('+'+'+'.join(['-'*i for i in lengths])+'+',file=file)
 
     elif kind=="simple":
@@ -44,18 +58,22 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
         print(' '.join(['-'*i for i in lengths]),file=file)
         ddfl = [df.ix[:,c].map(lambda x: space_fill(x,lengths[c],align[c],uwidth=uwidth,spcwidth=spcwidth)) for c in range(collen)]
 
-        if squeeze: ddfl = '\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
-        else: ddfl = '\n\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
+        if squeeze: ddflout = '\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
+        else: ddflout = '\n\n'.join([' '.join(i) for i in pd.DataFrame(ddfl).T.values])
 
-        print(ddfl,file=file)
+        print(ddflout,file=file)
         print('-'*(sum(lengths)+collen-1),file=file)
 
 
 def df_format_read(string,replace_na=True):
-    ss = [i for i in split_wrd(string,list('\n\r'),ignore_space=True) if not re.findall('^[- ]+$',i)]
+    ss = [i for i in split_wrd(string,list('\n\r'),ignore_space=True) if not re.findall('^[-=|+ ]+$',i)]
     try:
-        data = pd.DataFrame([split_wrd(i,['  ','\t'],ignore_space=True) for i in ss[1:]]).values
-        columns = np.array(split_wrd(ss[0],[' ','\t']))
+        columns = np.array([i.strip() for i in split_wrd(ss[0],'|')])
+        data = pd.DataFrame([split_wrd(i,'|') for i in ss[1:]]).values
+        data = np.array([['-' if re.findall('^\s+$',i) else i.strip() for i in j] for j in data])
+        if len(columns) != data.shape[1] or len(columns) == 1: 
+            columns = np.array(split_wrd(ss[0],[' ','\t']))
+            data = pd.DataFrame([split_wrd(i,['  ','\t'],ignore_space=True) for i in ss[1:]]).values
         data = np.array([[j if j not in ['nan','na','None'] else None for j in i] for i in data])
 
         # fill data
