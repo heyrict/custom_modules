@@ -3,7 +3,7 @@ import pandas as pd, numpy as np
 from data_processing import split_wrd, space_fill
 
     
-def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidth=2,spcwidth=1,kind="simple"):
+def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidth=2,spcwidth=1,kind="simple",margin=None):
     lengths = []
     if index: df = df.reset_index()
     collen = len(df.columns)
@@ -21,9 +21,10 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
     # lenths of values
     for c in range(len(dfshap.columns)):
         dfshap.iloc[:,c] = dfshap.iloc[:,c].map(lambda x: int(len(str(x)) + delta*(len(x.encode('utf-8')) - len(x))//2))
-    lengths = np.max([lengths,dfshap.max()],axis=0)+2
 
     if kind=="normal":
+        if not margin: margin = 0
+        lengths = np.max([lengths,dfshap.max()],axis=0)+margin
         print('+'+'+'.join(['-'*i for i in lengths])+'+',file=file)
         dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
         print('|'+'|'.join(dcfl)+'|',file=file)
@@ -42,8 +43,9 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
             for ind in range(1,len(df)):
                 #ddflout.append('+'+'+'.join([(' ' if ddsm[j][ind] else '-')*i for i,j in zip(lengths,range(ddsm.shape[0]))])+'+')
                 line = '|' if ddsm[0][ind] else '+'
-                for i,j in zip(lengths,range(ddsm.shape[0])):
+                for i,j in zip(lengths,range(ddsm.shape[0]-1)):
                     line += (' ' if ddsm[j][ind] else '-')*i + ('|' if (ddsm[j][ind] and ddsm[j+1][ind]) else '+')
+                line += (' ' if ddsm[j+1][ind] else '-')*lengths[-1] + ('|' if ddsm[j+1][ind] else '+')
                 ddflout.append(line)
                 ddflout.append('|'+'|'.join(dfproc[ind])+'|')
             ddflout = '\n'.join(ddflout)
@@ -52,6 +54,8 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
         print('+'+'+'.join(['-'*i for i in lengths])+'+',file=file)
 
     elif kind=="simple":
+        if not margin: margin = 2
+        lengths = np.max([lengths,dfshap.max()],axis=0)+margin
         print(' '.join(['-'*i for i in lengths]),file=file)
         dcfl = [space_fill(df.columns[i],length=lengths[i],align=align[i],uwidth=uwidth,spcwidth=spcwidth) for i in range(collen)]
         print(' '.join(dcfl),file=file)
@@ -70,7 +74,7 @@ def df_format_read(string,replace_na=True):
     try:
         columns = np.array([i.strip() for i in split_wrd(ss[0],'|')])
         data = pd.DataFrame([split_wrd(i,'|') for i in ss[1:]]).values
-        data = np.array([['-' if re.findall('^\s+$',i) else i.strip() for i in j] for j in data])
+        data = np.array([['na' if type(i)==type(None) else ('-' if re.findall('^\s+$',i) else i.strip()) for i in j] for j in data])
         if len(columns) != data.shape[1] or len(columns) == 1: 
             columns = np.array(split_wrd(ss[0],[' ','\t']))
             data = pd.DataFrame([split_wrd(i,['  ','\t'],ignore_space=True) for i in ss[1:]]).values
@@ -92,3 +96,14 @@ def df_format_read(string,replace_na=True):
         print(e)
         raise ValueError('Data Passed Unrecognizable')
 
+
+def df_split_line(df,token=';'):
+    out = pd.DataFrame()
+    for i in df.values:
+        line = [j.split(token) for j in i]
+        maxitemc = max([len(i) for i in line])
+        oline = []
+        for t in range(maxitemc):
+            oline.append([k[t] if len(k) > t else None for k in line])
+        out = pd.concat([out, pd.DataFrame(oline)], ignore_index=True)
+    return out.fillna('-')
