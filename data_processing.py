@@ -343,7 +343,7 @@ def squeeze_numlist(numlist,sort=False):
         if ind == 0: break
         numlist = numlist[ind:]
         length = len(numlist)
-    return ','.join(out)
+    return ','.join([str(i) for i in out])
 
 
 def unsqueeze_numlist(numlist):

@@ -76,7 +76,7 @@ def df_format_read(string,replace_na=True):
         data = pd.DataFrame([split_wrd(i,'|') for i in ss[1:]]).values
         data = np.array([['na' if type(i)==type(None) else ('-' if re.findall('^\s+$',i) else i.strip()) for i in j] for j in data])
         if len(columns) != data.shape[1] or len(columns) == 1: 
-            columns = np.array(split_wrd(ss[0],[' ','\t']))
+            columns = np.array(split_wrd(ss[0],['  ','\t']))
             data = pd.DataFrame([split_wrd(i,['  ','\t'],ignore_space=True) for i in ss[1:]]).values
         data = np.array([[j if j not in ['nan','na','None'] else None for j in i] for i in data])
 
