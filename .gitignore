@@ -103,6 +103,9 @@ ENV/
 # vim swap files
 .*.swp
 
+# text files
+*.txt
+
 # other projects
 CLV3/
 SysAna/
@@ -113,6 +116,16 @@ rm-protection/
 scraping_eng_wordlist/
 scrapy/
 secr_train/
+qtproj/
+shell/
+tableutils/
+temp/
+tensorflow/
+octave/
+kivyproj/
+cpp/
+c/
+adventure/
 
 # binary files for PATH
 bin/
