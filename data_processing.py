@@ -49,7 +49,7 @@ def split_wrd(string,sep,rep=None,ignore_space=False,kind='split'):
     --------
     split_at
     '''
-    if kind not in ['split','re']: 
+    if kind not in ['split','re']:
         raise ValueError('kind passed should be `split` or `re`')
     if type(sep) == str:
         sep = [sep]
@@ -96,7 +96,7 @@ def split_at(string,sep,ignore_space=False,kind='split'):
     --------
     split_wrd
     '''
-    if kind not in ['split','re']: 
+    if kind not in ['split','re']:
         raise ValueError('kind passed should be `split` or `re`')
     if type(sep) == str:
         sep = [sep]
@@ -114,7 +114,7 @@ def split_at(string,sep,ignore_space=False,kind='split'):
 def flip_dict_full(dict_to_flip):
     '''
     flip a dict with no data loss
-    
+
     Parameters
     ----------
     dict_to_flip : dict
@@ -179,8 +179,8 @@ def _in_list(x,ls,how='find'):
         for item in ls:
             if x == item: return True
         return False
-   
- 
+
+
 def be_subset(sub,main):
     '''
     return True if sub is a subset of main.
@@ -189,7 +189,7 @@ def be_subset(sub,main):
     for i in sub:
         res &= (i in main)
     return res
-        
+
 
 class InteractiveAnswer():
     '''
@@ -240,7 +240,7 @@ class InteractiveAnswer():
             self._encode = encode
             self._accept_empty = accept_empty
         self._hint = hint
-        if self._verify: 
+        if self._verify:
             try: self._hint += '(' + squeeze_numlist(self._verify) + ')'
             except: self._hint += '('+'/'.join([i for i in list(self._verify)])+')'
 
@@ -339,7 +339,7 @@ def squeeze_numlist(numlist,sort=False):
         ind = abs(cstrcmp(numlist,comp))
         if ind == 1: out.append(comp[0])
         else: out.append('%d-%d'%(comp[0],comp[ind-1]))
-        
+
         if ind == 0: break
         numlist = numlist[ind:]
         length = len(numlist)
@@ -369,7 +369,7 @@ def colorit(string,color):
     else:
         if color not in range(256):
             raise ValueError(color,'is not a 256-color index')
-    
+
     return '\033[38;5;%dm%s\033[0m'%(color,string)
 
 
@@ -387,11 +387,11 @@ def auto_newline(string, thresh=78, combine=True, remove_spaces=False, auto_inde
     remove_spaces : bool
         whether to remove spaces in the head and tail.
     '''
-    if combine: 
+    if combine:
         string = re.sub(r' *([^\n]) *\n *([^\n]) *',r'\1 \2',string)
     strls = split_at(string,'\n')
     if remove_spaces: strls = [re.sub(r'^ *(.*) *(\n+)',r'\1\2',i) for i in strls]
-    if auto_indent: 
+    if auto_indent:
         indents = [re.findall('^ +\(?\d*\.?\)?\+?-?\*?>? *',i) for i in strls]
         indents = [len(i[0]) if len(i)>0 else 0 for i in indents]
     else: indents = [0]*len(strls)
