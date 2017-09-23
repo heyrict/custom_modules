@@ -6,6 +6,7 @@
 #define GE 1
 #define LT 2
 #define LE 3
+#define MAXINPLEN 20
 
 using namespace std;
 
@@ -18,14 +19,14 @@ int totcalc(string totcalc_str);
 int main(int argc, char **argv)
 {
     std::srand(time(NULL));
-    char inp[10];
+    char inp[MAXINPLEN];
 
     if (argc > 1)
         for (int i = 1; i < argc; ++i)
             totcalc(string(argv[i]));
     else
     {
-        while (cin >> inp)
+        while (cin.getline(inp, MAXINPLEN))
             totcalc(string(inp));
         return 0;
     }
@@ -33,9 +34,17 @@ int main(int argc, char **argv)
 
 int totcalc(string totcalc_str)
 {
+    // Pre-processing: remove blanks && tolower
+    for (int i = 0; i < (int)totcalc_str.length(); ++i)
+    {
+        while( totcalc_str[i] == ' ')
+            totcalc_str = totcalc_str.substr(0, i) + totcalc_str.substr(i+1);
+        totcalc_str[i] = tolower(totcalc_str[i]);
+    }
+
     if (calc(totcalc_str) == 0)
         return 0;
-    cout << ">> " << totcalc_str 
+    cout << ">> " << totcalc_str
         <<"\n\tCannot Recognize the input" << endl;
     return -1;
 }
@@ -47,9 +56,6 @@ int calc(string calc_str)
     int indicator_len = 2;
     int thresh = -1;
     int indicator = -1;
-
-    for (int i = 0; i < (int)calc_str.length(); ++i)
-        calc_str[i] = tolower(calc_str[i]);
 
     if ((indicator_pos = calc_str.find("gt")) > 0)
         indicator = GT;
@@ -63,7 +69,7 @@ int calc(string calc_str)
         indicator = GE;
     else if ((indicator_pos = calc_str.find("<=")) > 0)
         indicator = LE;
-    else 
+    else
     {
         indicator_len = 1;
         if ((indicator_pos = calc_str.find("l")) > 0)
@@ -93,7 +99,7 @@ int calc(string calc_str)
 
     if (dice(dice_str, indicator, thresh))
         return -1;
-    else 
+    else
         return 0;
 }
 
@@ -162,7 +168,7 @@ int dice(string dice_str, int indicator, int thresh)
                 return -1;
     }
     cout << ">> " << dice_count << "D" << dice_faces;
-    
+
     if (thresh > 0)
         switch (indicator)
         {
