@@ -126,6 +126,8 @@ kivyproj/
 cpp/
 c/
 adventure/
+django/
+js_script/
 
 # binary files for PATH
 bin/

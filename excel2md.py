@@ -11,7 +11,7 @@ class string():
 
     def read(self):
         return self.content
-    
+
     def write(self,*args,sep=' ',end=''):
         self.content += sep.join([str(i) for i in args])+end
 
@@ -32,6 +32,7 @@ def main():
     opt.add_option('--uwidth',dest='uwidth',default=2,help='relative width of utf8 characters with latin characters')
     opt.add_option('--spcwidth',dest='spcwidth',default=1,help='relative width of space with latin characters')
     opt.add_option('--preset',dest='preset',default=None,help='presettings: [`xmind`]')
+    opt.add_option('-O', '--order-by',dest='order_by',default=None)
     (options,args) = opt.parse_args()
 
     inp = args
@@ -50,8 +51,8 @@ def main():
             options.uwidth = 2.5
             options.spcwidth = 0.605
 
-    if options.in_place: 
-        mode = 'w' 
+    if options.in_place:
+        mode = 'w'
         if options.vim_edit: options.output = '/tmp/excel2md_edit.md'
         elif len(inp)==0:
             print('Error: no file found for replace');return
@@ -98,6 +99,22 @@ def main():
                 except Exception as e: print(e);return
 
     data = data.applymap(str)
+
+    # sort
+    if options.order_by:
+        asc = True
+        if options.order_by[0] == '-':
+            asc = False
+            options.order_by = options.order_by[1:]
+        elif options.order_by[0] == '+':
+            options.order_by = options.order_by[1:]
+        try: options.order_by = data.columns[int(options.order_by)]
+        except: pass
+        try:
+            data = data.sort_values(options.order_by, ascending=asc)
+        except Exception as e:
+            print(e)
+            exit(1)
 
     # output
     TO = options.TO if options.TO else (options.output.split('.')[-1]\

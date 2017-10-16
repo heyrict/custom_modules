@@ -2,7 +2,7 @@ import sys, re
 import pandas as pd, numpy as np
 from data_processing import split_wrd, space_fill
 
-    
+
 def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidth=2,spcwidth=1,kind="simple",margin=None):
     lengths = []
     if index: df = df.reset_index()
@@ -70,12 +70,12 @@ def df_format_print(df,file=sys.stdout,index=False,align='c',squeeze=False,uwidt
 
 
 def df_format_read(string,replace_na=True):
-    ss = [i for i in split_wrd(string,list('\n\r'),ignore_space=True) if not re.findall('^[-=|+ ]+$',i)]
+    ss = [i for i in split_wrd(string,list('\n\r'),ignore_space=True) if not re.findall('^[-:=|+ ]+$',i)]
     try:
         columns = np.array([i.strip() for i in split_wrd(ss[0],'|')])
         data = pd.DataFrame([split_wrd(i,'|') for i in ss[1:]]).values
         data = np.array([['na' if type(i)==type(None) else ('-' if re.findall('^\s+$',i) else i.strip()) for i in j] for j in data])
-        if len(columns) != data.shape[1] or len(columns) == 1: 
+        if len(columns) != data.shape[1] or len(columns) == 1:
             columns = np.array(split_wrd(ss[0],['  ','\t']))
             data = pd.DataFrame([split_wrd(i,['  ','\t'],ignore_space=True) for i in ss[1:]]).values
         data = np.array([[j if j not in ['nan','na','None'] else None for j in i] for i in data])
@@ -87,7 +87,7 @@ def df_format_read(string,replace_na=True):
                 columns = np.hstack([columns]+[np.nan]*(ds-cs))
             else:
                 data = np.hstack([data,[[np.nan]*(cs-ds)]*data.shape[0]])
-        
+
         df = pd.DataFrame(data,columns=columns)
         if replace_na: df = df.fillna(' ')
         else: df = df.fillna('na')
