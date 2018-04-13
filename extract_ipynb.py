@@ -62,10 +62,13 @@ if __name__ == "__main__":
 
                 else:  # Is code block
                     outputs = []
+                    stdoutputs = []
                     source = []
                     for j in lines:
-                        if re.match("^#Output: ?|^#O: ?", j):
-                            outputs.append(re.sub("^#Output: ?|^#O: ?", "", j))
+                        if re.match("^#Data: ?|^#O: ?", j):
+                            outputs.append(re.sub("^#Data: ?|^#O: ?", "", j))
+                        if re.match("^#StdOut: ?|^#S: ?", j):
+                            stdoutputs.append(re.sub("^#StdOut: ?|^#S: ?", "", j))
                         else:
                             source.append(j)
                     cells.append({
@@ -81,7 +84,8 @@ if __name__ == "__main__":
                         'outputs': [{
                             'output_type': 'stream',
                             'name': 'stdout',
-                            'text': outputs
+                            'text': stdoutputs if stdoutputs else None,
+                            'text/plain': outputs if outputs else None,
                         }],
                         'source': source
                     })
@@ -107,8 +111,11 @@ if __name__ == "__main__":
                         f.write("".join(b['source']))
                         for o in b['outputs']:
                             if 'text' in o.keys():
-                                f.write("\n\n#Output: " +
-                                        "#Output: ".join(o['text']))
+                                f.write("\n\n#StdOut: " +
+                                        "#StdOut: ".join(o['text']))
+                            elif 'data' in o.keys() and 'text/plain' in o['data']:
+                                f.write("\n\n#Data: " +
+                                        "#Data: ".join(o['data']['text/plain']))
                     elif b['cell_type'] == "markdown":
                         f.write("#Info: " + "#Info: ".join(b['source']))
                     f.write("\n\n%s\n\n" % ('#' + "-*" * 33 + '-#'))
