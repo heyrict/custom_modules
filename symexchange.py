@@ -29,6 +29,8 @@ def main():
             '(doesn\'t work if -u/--to-full is set',action='store_true',default=False)
     opt.add_option('-o','--only',dest='only',help='to contain only the given rules'\
             'separated by a space',action='append',default=[])
+    opt.add_option('-n','--normalize',dest='normalize',help='Using normalize method'\
+            '(other options will not work!)',action='store_true',default=False)
     (options, args) = opt.parse_args()
 
     options.include = [i.split(' ') for i in options.include]
@@ -64,6 +66,9 @@ def main():
             data = split_wrd(data,[' ?'+j if j=='(' else j+' ?'\
                     for j in HALF],FULL,kind='re') \
                     if options.space else split_wrd(data,HALF,FULL)
+        elif options.normalize:
+            import unicodedata
+            data = unicodedata.normalize('NFKC', data)
         else:
             data = split_wrd(data,[j+' ?' for j in FULL],\
                     [' '+j if j=='(' else j+' ' for j in HALF],kind='re') \
