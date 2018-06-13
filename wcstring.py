@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 class wcstr(str):
     def __new__(*args, **kwargs):
         return str.__new__(*args, **kwargs)
@@ -9,7 +10,7 @@ class wcstr(str):
 
     def _update(self):
         self.bitindex = []
-        for i,j in zip(str(self), range(len(str(self)))):
+        for i, j in zip(str(self), range(len(str(self)))):
             iwidth = 1 if len(i.encode('utf8')) <= 2 else 2
             self.bitindex += [j] * iwidth
 
@@ -18,15 +19,18 @@ class wcstr(str):
 
     def __getitem__(self, y):
         if type(y) == int:
-            return wcstr(super(wcstr, self).__getitem__(
-                    self.bitindex[y]))
+            return wcstr(super(wcstr, self).__getitem__(self.bitindex[y]))
         elif type(y) == slice:
             start = self.bitindex[y.start] if y.start else None
-            stop = self.bitindex[y.stop] if y.stop else None
+            if y.stop and y.stop < len(self.bitindex):
+                stop = self.bitindex[y.stop] if y.stop else None
+            else:
+                stop = None
             step = y.step
-            return wcstr(super(wcstr, self).__getitem__(slice(
-                start, stop, step)))
-        else: return
+            return wcstr(
+                super(wcstr, self).__getitem__(slice(start, stop, step)))
+        else:
+            return
 
     def dupstr(self):
         # return a duplicated string with every element
@@ -46,12 +50,14 @@ class wcstr(str):
 
     def __format__(self, *args, **kwargs):
         return wcstr(super(wcstr, self).__format__(*args, **kwargs))
-    
+
     def center(self, width, fillchar=' '):
         filllen = (width - len(self)) // 2
-        return wcstr(fillchar * filllen + self + fillchar * (width - len(self) - filllen))
-       #return super(wcstr, self).center(width - len(self) +
-       #        len(str(self)))
+        return wcstr(fillchar * filllen + self + fillchar *
+                     (width - len(self) - filllen))
+
+    #return super(wcstr, self).center(width - len(self) +
+    #        len(str(self)))
 
     def casefold(self, *args, **kwargs):
         return wcstr(super(wcstr, self).casefold(*args, **kwargs))
