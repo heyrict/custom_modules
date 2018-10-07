@@ -71,7 +71,7 @@ if __name__ == "__main__":
                             stdoutputs.append(re.sub("^#StdOut: ?|^#S: ?", "", j))
                         else:
                             source.append(j)
-                    cells.append({
+                    cell = {
                         'cell_type': 'code',
                         'metadata': {
                             'deletable': True,
@@ -84,11 +84,14 @@ if __name__ == "__main__":
                         'outputs': [{
                             'output_type': 'stream',
                             'name': 'stdout',
-                            'text': stdoutputs if stdoutputs else None,
-                            'text/plain': outputs if outputs else None,
                         }],
                         'source': source
-                    })
+                    }
+                    if stdoutputs:
+                        cell['outputs'][0]['text'] = stdoutputs
+                    if outputs:
+                        cell['outputs'][0]['text/plain'] = outputs
+                    cells.append(cell)
 
             obj = {
                 'nbformat_minor': 1,
