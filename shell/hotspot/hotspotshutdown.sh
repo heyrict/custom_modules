@@ -26,7 +26,7 @@ iw dev new1 del
 sleep 1
 
 echo "Unblocking phy0..."
-rfkill unblock phy0
+rfkill unblock 3
 sleep 5
 
 echo "Starting Network Manager"
