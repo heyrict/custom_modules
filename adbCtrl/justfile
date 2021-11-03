@@ -1,0 +1,232 @@
+s := `typeset -A v=$(adb devices | tail +2 | cut -d"	" -f1); echo ${v[0]}`
+
+default_time := '200'
+#touchpad_evdev := `echo 'for line in $(adb shell getevent -lp 2>/dev/null | egrep -o "(/dev/input/event\S+)"); do output=$(adb shell getevent -lp $line); [[ "$output" == *"ABS_MT"* ]] && echo "$line"; done; true' | bash`
+
+replay_dir := 'replay_files'
+replay_bin := 'eventrec'
+replay_android_bin := '/data/local/tmp/eventrec'
+
+screenshot:
+	adb -s {{s}} shell screencap -p /sdcard/autojump.png
+	adb -s {{s}} pull /sdcard/autojump.png /tmp/autojump.png
+	adb -s {{s}} shell rm /sdcard/autojump.png
+	gimp /tmp/autojump.png
+
+#get-touchpad:
+#	echo {{ touchpad_evdev }}
+
+record-init:
+	adb -s {{s}} push {{replay_bin}} {{replay_android_bin}}
+	adb -s {{s}} shell chmod u+x {{replay_android_bin}}
+
+record FILE:
+	adb -s {{s}} shell "{{replay_android_bin}}" -r "/data/local/tmp/{{FILE}}.record"
+
+record-get FILE DIR=replay_dir:
+	if [ ! -d "{{DIR}}" ]; then mkdir "{{DIR}}"; fi;
+	adb -s {{s}} pull "/data/local/tmp/{{FILE}}.record" "{{DIR}}"
+
+record-getall DIR=replay_dir:
+	if [ ! -d "{{DIR}}" ]; then mkdir "{{DIR}}"; fi;
+	adb -s {{s}} pull `just record-list` "{{DIR}}"
+
+record-list:
+	adb -s {{s}} shell ls /data/local/tmp/*.record
+
+record-clean:
+	adb -s {{s}} shell rm /data/local/tmp/*.record
+
+replay FILE:
+	if [ -f "{{FILE}}" ]; then \
+		adb -s {{s}} push "{{FILE}}" /data/local/tmp/; \
+		adb -s {{s}} shell "{{replay_android_bin}}" -p "/data/local/tmp/$(basename {{FILE}})"; \
+	else \
+		adb -s {{s}} shell "{{replay_android_bin}}" -p "/data/local/tmp/{{FILE}}.record"; \
+	fi;
+
+tap X Y:
+	adb -s {{s}} shell input tap {{X}} {{Y}}
+
+menu:
+	adb -s {{s}} shell input keyevent 1
+
+home:
+	adb -s {{s}} shell input keyevent 3
+
+back:
+	adb -s {{s}} shell input keyevent 4
+
+swipe AX AY BX BY TIME=default_time:
+	adb -s {{s}} shell input swipe {{AX}} {{AY}} {{BX}} {{BY}} {{TIME}}
+
+# ========== Arsnotoria =========
+
+arsnotoria-loop:
+	# Retry
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 752 1432
+	# Battle
+	#sleep 65s # For Event 2/1
+	#sleep 62s # For Normal 1-7
+	#sleep 50s # For Hard 1-1
+	sleep 98s # For Hard 1-14
+	#sleep 90s # For Hard 3-17
+	#sleep 125s # For Hard 4-11
+	#sleep 130s # For Hard 4-12
+	#sleep 83s # For Hard 4-4
+	#sleep 117 # For Event 2 Hard 2
+	#sleep 235 # For Event 1 Ex 1
+	#sleep 220 # For Event 2 Ex 1
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+	sleep 5s
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+	sleep 2s
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+	sleep 2s
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+	sleep 2s
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+	sleep 2s
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+	sleep 2s
+	just s={{s}} tap 272 1768
+	just s={{s}} tap 272 1768
+
+
+# ========== Taobao =========
+
+next-page:
+	just s={{s}} swipe 1500 500 500 500
+
+prev-page:
+	just s={{s}} swipe 500 500 1500 500
+
+taobao-tapnwait X Y:
+	# Tap {{X}} {{Y}}
+	just s={{s}} tap {{X}} {{Y}}
+	# Wait for page to load
+	sleep 8s
+	## Scrolling
+	#just s={{s}} swipe 500 1500 500 300; sleep 1s;
+	#just s={{s}} swipe 500 1500 500 300; sleep 1s;
+	#just s={{s}} swipe 500 1500 500 300; sleep 1s;
+	#just s={{s}} swipe 500 1500 500 300; sleep 1s;
+	# Wait for 20 seconds
+	sleep 20s
+	# Back
+	just s={{s}} back
+	# Wait for page to load
+	sleep 5s;
+
+# 2019
+#taobao-all:
+#	# Login
+#	just tap 896 792
+#	# First button: 888 1168
+#	just taobao-tapnwait 888 1168
+#	#Second button x 8: 888 1360
+#	for i in `seq 1 8`; do \
+#		just taobao-tapnwait 888 1360; \
+#	done;
+#	# Third button x 3: 888 1552
+#	for i in `seq 1 3`; do \
+#		just taobao-tapnwait 888 1552; \
+#	done;
+#	#Fourth button x 3: 888 1728
+#	for i in `seq 1 3`; do \
+#		just taobao-tapnwait 888 1728; \
+#	done;
+#	# Farm
+#	just tap 888 1728
+#	sleep 6s
+#	just tap 104 1628
+#	sleep 1s
+#	just tap 504 1256
+#	sleep 1s
+#	just back
+#	sleep 1s
+#	# Awards
+#	just tap 888 1728
+#	sleep 5s
+#	just tap 912 1352
+#	sleep 1s
+#	just back
+#	sleep 1s
+#	# Home
+#	just tap 888 1728
+#	just swipe 500 500 500 2000; sleep 1s;
+#	just swipe 500 500 500 2000; sleep 1s;
+#	just tap 888 1728
+#	sleep 8s;
+#	just tap 888 1728
+#	sleep 1s;
+#	# Scroll to the bottom of the list and browse the last item
+#	for i in `seq 1 20`; do \
+#		just swipe 500 1500 500 1000; \
+#		just taobao-tapnwait 900 1656; \
+#	done;
+
+taobao-2020-button N:
+	#!/usr/bin/env bash
+	case "{{N}}" in
+		*1) just s={{s}} taobao-tapnwait 888 1040 ;;
+		*2) just s={{s}} taobao-tapnwait 888 1240 ;;
+		*3) just s={{s}} taobao-tapnwait 888 1430 ;;
+		*4) just s={{s}} taobao-tapnwait 888 1620
+	esac
+
+alipay-2020-button N:
+	#!/usr/bin/env bash
+	case "{{N}}" in
+		*1) just s={{s}} taobao-tapnwait 900 590 ;;
+		*2) just s={{s}} taobao-tapnwait 900 770 ;;
+		*3) just s={{s}} taobao-tapnwait 900 960
+	esac
+
+# 2020
+taobao-all:
+	# First button: 888 1040
+	for i in `seq 1 1`; do \
+		just taobao-2020-button 1; \
+	done;
+	## Second button x 20: 888 1240
+	#for i in `seq 1 20`; do \
+	#	just taobao-2020-button 2; \
+	#done;
+	# Third button x 20: 888 1420
+	for i in `seq 1 25`; do \
+		just taobao-2020-button 3; \
+	done;
+	# Fourth button x 5: 888 1620
+	for i in `seq 1 5`; do \
+		just taobao-2020-button 4; \
+	done;
+	# Rewards
+	just s={{s}} tap 580 910; sleep 2s;
+	just s={{s}} tap 756 910; sleep 2s;
+	just s={{s}} tap 936 910; sleep 2s;
+
+# 2020
+alipay-all:
+	# First button: 888 1040
+	for i in `seq 1 1`; do \
+		just alipay-2020-button 1; \
+		just tap 540 1340; \
+	done;
+	# Second button x 20: 888 1240
+	for i in `seq 1 5`; do \
+		just alipay-2020-button 2; \
+		just tap 540 1340; \
+	done;
+	# Third button x 20: 888 1420
+	for i in `seq 1 1`; do \
+		just alipay-2020-button 3; \
+		just tap 540 1340; \
+	done;
